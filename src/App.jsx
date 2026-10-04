@@ -151,7 +151,7 @@ const TRANSLATIONS = {
     "fraud.8.title": "8. Fake Testimonials",
     "fraud.8.desc": "Fabricated screenshots of profits and success stories used as social proof to deceive you.",
     "fraud.9.title": "9. Pump-and-Dump Schemes",
-    "fraud.9.desc": "Manipulative promotion of cheap stocks to artificially inflate prices before scammers sell their shares.",
+    "fraud.9.desc": "Manipulative promotion of cheap stocks to artificially inflate prices before scammers sell reductions.",
     "fraud.10.title": "10. Unregistered Advice",
     "fraud.10.desc": "Receiving investment advice from individuals not registered as SEBI Investment Advisors.",
     "fraud.11.title": "11. Recruitment-Based Schemes",
@@ -235,6 +235,7 @@ const TRANSLATIONS = {
     "scam.label.link": "संदिग्ध लिंक या फ़ोन नंबर यहाँ पेस्ट करें:",
     "scam.upload": "इमेज फाइल चुनें",
     "scam.image_attached": "✓ चित्र संलग्न",
+    "scam.url": "वैकल्पिक URL/फोन",
     "scam.risk": "जोखिम मूल्यांकन",
     "scam.warnings": "हमें क्या मिला",
     "scam.verify": "आपको क्या सत्यापित करना चाहिए",
@@ -402,11 +403,11 @@ function AppContent() {
   const decreaseFont = () => setFontScale(p => Math.max(p - 10, 80));
   const resetFont = () => setFontScale(100);
 
-  // Fetch metrics
+  // Fetch metrics (Vercel-safe absolute path update: relative to root)
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/metrics");
+        const res = await fetch("/api/metrics");
         const data = await res.json();
         setMetrics(data);
       } catch (e) {
@@ -498,7 +499,7 @@ function AppContent() {
   const apiCall = async (endpoint, analysisKey, statusUpdate) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/${endpoint}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(incident) });
+      const res = await fetch(`/api/${endpoint}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(incident) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Failed to process");
       
@@ -551,19 +552,15 @@ function AppContent() {
     setChatHistory(prev => [...prev, { sender: 'user', text: chatMessage }]);
     const msg = chatMessage; setChatMessage("");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: msg, language: lang === 'hi' ? 'Hindi' : 'English' }) });
+      const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: msg, language: lang === 'hi' ? 'Hindi' : 'English' }) });
       const data = await res.json();
       setChatHistory(prev => [...prev, { sender: 'bot', text: data.reply }]);
     } catch (e) { console.error(e); }
   };
 
-  const fontSizeClass = fontSize === 'sm' ? 'text-sm' : fontSize === 'lg' ? 'text-lg' : 'text-base';
-
-  // Computed Check for Submittability
   const canSubmitDetect = incident.suspicious_content?.trim() !== '' || 
                           incident.screenshot_base64 !== null || 
                           (incident.urls_contacts[0] && incident.urls_contacts[0].trim() !== '');
-
 
   if (lang === null) {
     return (
@@ -582,7 +579,7 @@ function AppContent() {
   }
 
   return (
-    <div className={`min-h-screen bg-[#f4f7f6] text-gray-900 font-sans flex flex-col`}>
+    <div className="min-h-screen bg-[#f4f7f6] text-gray-900 font-sans flex flex-col">
       
       {/* HEADER SECTION INLINED */}
       <div className="bg-[#132a41] text-gray-200 text-xs py-1.5 px-4 sm:px-8 flex justify-between items-center font-sans">
@@ -913,7 +910,7 @@ function AppContent() {
 
                   <div className="flex justify-between items-center mb-4 border-t border-gray-200 pt-4">
                     <button onClick={() => toggleSpeech('suspicious_content')} className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-sm font-semibold border border-gray-400"><Mic size={16}/> {t('common.speak')}</button>
-                    <button onClick={() => apiCall('check_message', 'scam_check', 'SCAM_ANALYZED')} disabled={loading || !canSubmitDetect} className="bg-[#003366] hover:bg-[#002244] text-white px-6 py-2.5 rounded-sm font-bold shadow-sm w-full md:w-auto">{loading ? t('common.analyzing') : t('common.submit')}</button>
+                    <button onClick={() => apiCall('check_message', 'scam_check', 'SCAM_ANALYZED')} disabled={loading || (!canSubmitDetect)} className="bg-[#003366] hover:bg-[#002244] text-white px-6 py-2.5 rounded-sm font-bold shadow-sm w-full md:w-auto">{loading ? t('common.analyzing') : t('common.submit')}</button>
                   </div>
 
                   {incident.ai_analysis.scam_check && (
@@ -1102,7 +1099,7 @@ function AppContent() {
                   {incident.ai_analysis.complaint_draft && (
                     <div className="mt-6 border border-[#003366]">
                       <div className="flex border-b border-[#003366] font-bold bg-gray-100 text-gray-600">
-                        <button onClick={() => setActiveTab('scores')} className={`flex-1 py-3 border-r border-[#003366] ${activeTab === 'scores' ? 'bg-[#003366] text-white' : 'hover:bg-gray-200'}`}>{t('complaint.draft')}</button>
+                        <button onClick={() => setActiveTab('scores')} className={`flex-1 py-3 border-r border-[#003366] ${activeTab === 'scores' ? 'bg-[#003366] text-white' : 'hover:bg-gray-200'}`}>{t('complaint.title')}</button>
                         <button onClick={() => setActiveTab('instructions')} className={`flex-1 py-3 ${activeTab === 'instructions' ? 'bg-[#003366] text-white' : 'hover:bg-gray-200'}`}>{t('complaint.instructions')}</button>
                       </div>
                       
